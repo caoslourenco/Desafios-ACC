@@ -1,4 +1,5 @@
 package acc.br.student_registration.dto;
+
 import lombok.Data;
 
 @Data

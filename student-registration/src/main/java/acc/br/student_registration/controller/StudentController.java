@@ -1,18 +1,19 @@
 package acc.br.student_registration.controller;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
-import org.springframework.ui.Model;
 
+import acc.br.student_registration.dto.StudentRegistrationDTO;
 import acc.br.student_registration.entity.Student;
 import acc.br.student_registration.service.StudentService;
-import acc.br.student_registration.dto.StudentRegistrationDTO;
 
 @Controller
 @SessionAttributes("registrationData")
@@ -39,11 +40,17 @@ public class StudentController {
                              @RequestParam String name,
                              @RequestParam String course,
                              @RequestParam String cep,
-                             @RequestParam("dateOfBirth") String dob) {
+                             @RequestParam("dateOfBirth") String dob, 
+                             Model model) {
         registrationDto.setName(name);
         registrationDto.setCourse(course);
         registrationDto.setCep(cep);
-        registrationDto.setDateOfBirth(LocalDate.parse(dob));
+        try {
+            registrationDto.setDateOfBirth(LocalDate.parse(dob));
+        } catch (DateTimeParseException e) {
+            model.addAttribute("error", "Data de nascimento inválida. Use o formato yyyy-MM-dd.");
+            return "form";
+        }
         return "redirect:/student/review";
     }
 
@@ -56,20 +63,17 @@ public class StudentController {
     @PostMapping("/student/confirm")
     public String confirmRegistration(@ModelAttribute("registrationData") StudentRegistrationDTO registrationDto, Model model) {
         Student saved = studentService.createStudent(registrationDto);
-        // limpando dados de sessão:
         model.addAttribute("registrationData", new StudentRegistrationDTO());
         return "success";
     }
 
     @PostMapping("/student/edit")
-    public String editRegistration(@ModelAttribute("registrationData") StudentRegistrationDTO registrationDto, Model model) {
-        // Apenas retorna ao form com os dados já no registrationDto
+    public String editRegistration(@ModelAttribute("registrationData") StudentRegistrationDTO registrationDto) {
         return "form";
     }
 
     @PostMapping("/student/cancel")
     public String cancelRegistration(Model model) {
-        // Limpa o DTO
         model.addAttribute("registrationData", new StudentRegistrationDTO());
         return "form";
     }
